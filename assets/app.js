@@ -175,7 +175,7 @@ VIEWS.home = () => {
     <div>
       <span class="chip">Trình độ B1 · Khung tham chiếu châu Âu (CEFR)</span>
       <h1 style="margin-top:14px">Luyện Nghe, Nói, Đọc, Viết tiếng Anh B1 – mỗi bài học là một con dấu</h1>
-      <p>16 bài học theo chủ đề quen thuộc, có máy đọc mẫu, chấm phát âm bằng giọng nói, chấm bài tự động, thẻ từ vựng và bài kiểm tra tính giờ. Học theo lộ trình 4 tuần, tiến độ được lưu ngay trên trình duyệt.</p>
+      <p>${ALL.length} bài học theo chủ đề quen thuộc và theo định dạng đề VSTEP, có máy đọc mẫu, chấm phát âm bằng giọng nói, chấm bài tự động, thẻ từ vựng và bài kiểm tra tính giờ. Học theo lộ trình 4 tuần, tiến độ được lưu ngay trên trình duyệt.</p>
       ${S.name ? "" : `<form id="nameF" class="row" style="margin-bottom:16px"><input id="nameI" class="search" style="max-width:260px;background:#fff;color:#141a2e" placeholder="Nhập tên của bạn" aria-label="Tên của bạn"><button class="btn">Lưu tên</button></form>`}
       <div class="row">
         ${nx ? `<a class="btn pri" href="#${nx.id}">${ic("arrow")} ${Object.keys(S.done).length ? "Học tiếp" : "Bắt đầu"}: ${esc(nx.title)}</a>` : `<a class="btn pri" href="#progress">${ic("check")} Bạn đã hoàn thành tất cả bài học</a>`}
@@ -203,6 +203,7 @@ VIEWS.home = () => {
 
     <div class="section-head"><h2>Công cụ học tập</h2></div>
     <div class="grid">
+      <a class="card skill" href="#vstep" style="--k:var(--c-s)"><div class="ico">${ic("mic")}</div><h3>Luyện thi VSTEP</h3><p>Nghe, Đọc, Viết theo định dạng đề VSTEP bậc 3, luyện nói Part 1–3 và thi thử nói 12 phút.</p></a>
       <a class="card skill" href="#vocab" style="--k:var(--brand)"><div class="ico">${ic("cards")}</div><h3>Thẻ từ vựng</h3><p>Toàn bộ từ vựng trong các bài, lật thẻ, nghe phát âm, đánh dấu từ đã thuộc.</p></a>
       <a class="card skill" href="#test" style="--k:var(--coral)"><div class="ico">${ic("test")}</div><h3>Kiểm tra nhanh</h3><p>20 câu ngữ pháp và từ vựng B1 trong 15 phút, có giải thích chi tiết.</p></a>
       <a class="card skill" href="#progress" style="--k:var(--ok)"><div class="ico">${ic("chart")}</div><h3>Tiến độ &amp; Huy hiệu</h3><p>Điểm từng bài, chuỗi ngày học, huy hiệu, sao lưu và khôi phục tiến độ.</p></a>
@@ -226,15 +227,15 @@ function skillView(k) {
       <div class="row"><span class="chip">${skillDone(k)}/${D[k].length} bài hoàn thành</span><span class="chip">Trình độ B1</span></div></div>
     <div><b style="display:block;margin-bottom:10px">Sau phần này, bạn có thể:</b><ul class="cando">${s.cando.map(c => `<li>${c}</li>`).join("")}</ul></div>
   </div></section>
-  <div class="wrap"><div class="grid">${D[k].map(l => {
-    const d = S.done[l.id];
+  <div class="wrap">${[["Bài học B1 theo chủ đề", D[k].filter(l => !l.vstep)], ["Luyện theo định dạng đề VSTEP (bậc 3)", D[k].filter(l => l.vstep)]].filter(g => g[1].length).map(([gt, list]) => `<div class="section-head" style="margin-top:8px"><h2>${gt}</h2><span class="muted">${list.filter(l => S.done[l.id]).length}/${list.length} bài</span></div><div class="grid" style="margin-bottom:28px">${list.map(l => {
+    const d = S.done[l.id], ds = l.desc || l.prompt || (l.task && l.task.prompt) || "";
     return `<a class="card lesson" href="#${l.id}" style="--k:${s.color}">
-      <span class="num">BÀI ${l.n} · ${esc(l.type)}</span><h3>${esc(l.title)}</h3>
-      <p class="muted" style="margin:0;font-size:15px">${esc(l.desc || l.prompt || (l.task && l.task.prompt) || "")}</p>
-      <div class="row"><span class="chip">${esc(l.topic)}</span><span class="chip">${ic("clock").replace('aria-hidden="true"', 'width="14" height="14" aria-hidden="true"')} ${l.mins} phút</span></div>
+      <span class="num">${l.vstep ? "VSTEP" : "BÀI " + l.n} · ${esc(l.type)}</span><h3>${esc(l.title)}</h3>
+      <p class="muted" style="margin:0;font-size:15px">${esc(ds.length > 150 ? ds.slice(0, 147) + "…" : ds)}</p>
+      <div class="row"><span class="chip">${esc(l.topic)}</span><span class="chip">${l.mins} phút</span></div>
       ${d ? `<span class="done-tag">${ic("check").replace("<svg", '<svg width="16" height="16"')} Đã hoàn thành · ${d.score}/${d.total}</span>` : `<span class="muted" style="font-size:14px">Chưa học</span>`}
     </a>`;
-  }).join("")}</div></div>`;
+  }).join("")}</div>`).join("")}</div>`;
 }
 
 /* ---------- phần đầu & điều hướng bài học ---------- */
@@ -440,6 +441,7 @@ const LINKERS = ["and", "but", "because", "so", "however", "although", "also", "
 const findLinkers = t => { const s = " " + t.toLowerCase().replace(/[^a-z' ]+/g, " ").replace(/\s+/g, " ") + " "; return LINKERS.filter(k => s.includes(" " + k + " ")); };
 
 LESSON.speaking = l => {
+  if (l.custom) return VS[l.custom](l);
   const tk = l.task;
   app.innerHTML = head(l) + `<div class="wrap"><div class="two">
   <div>
@@ -643,7 +645,7 @@ LESSON.writing = l => {
     const avg = Math.round(n / Math.max(1, sents.length));
     const items = [
       [n >= l.min && n <= l.max, `Độ dài phù hợp (${n} từ; yêu cầu ${l.min}–${l.max})`],
-      [paras.length >= 3, `Chia đoạn rõ ràng (${paras.length} đoạn; nên có ít nhất 3 – để một dòng trống giữa các đoạn)`],
+      [paras.length >= (l.paras || 3), `Chia đoạn rõ ràng (${paras.length} đoạn; nên có ít nhất ${l.paras || 3} – để một dòng trống giữa các đoạn)`],
       [lk.length >= 4, `Từ nối đa dạng (${lk.length}: ${lk.slice(0, 8).join(", ") || "chưa có"})`],
       ...l.checks.map(c => {
         const re = new RegExp(c.re, c.f);
@@ -805,11 +807,11 @@ VIEWS.test = () => {
 /* ================= TIẾN ĐỘ ================= */
 const BADGES = [
   ["Bước đầu tiên", "Hoàn thành 1 bài học", () => Object.keys(S.done).length >= 1, "#2d4bd8"],
-  ["Đôi tai tinh", "Hoàn thành 4 bài Nghe", () => skillDone("listening") === 4, HEX.listening],
-  ["Tự tin nói", "Hoàn thành 4 bài Nói", () => skillDone("speaking") === 4, HEX.speaking],
-  ["Mọt sách", "Hoàn thành 4 bài Đọc", () => skillDone("reading") === 4, HEX.reading],
-  ["Cây bút vàng", "Hoàn thành 4 bài Viết", () => skillDone("writing") === 4, HEX.writing],
-  ["Hộ chiếu B1", "Hoàn thành cả 16 bài", () => Object.keys(S.done).length >= ALL.length, "#f2522f"],
+  ["Đôi tai tinh", `Hoàn thành ${D.listening.length} bài Nghe`, () => skillDone("listening") === D.listening.length, HEX.listening],
+  ["Tự tin nói", `Hoàn thành ${D.speaking.length} bài Nói`, () => skillDone("speaking") === D.speaking.length, HEX.speaking],
+  ["Mọt sách", `Hoàn thành ${D.reading.length} bài Đọc`, () => skillDone("reading") === D.reading.length, HEX.reading],
+  ["Cây bút vàng", `Hoàn thành ${D.writing.length} bài Viết`, () => skillDone("writing") === D.writing.length, HEX.writing],
+  ["Hộ chiếu B1", `Hoàn thành cả ${ALL.length} bài`, () => Object.keys(S.done).length >= ALL.length, "#f2522f"],
   ["Chăm chỉ", "Học 3 ngày liên tiếp", () => streak() >= 3, "#0b8a5a"],
   ["Thi thử", "Làm 1 bài kiểm tra", () => S.tests.length >= 1, "#c78a00"],
   ["Xuất sắc", "Đạt ≥ 80% bài kiểm tra", () => S.tests.some(t => t.score / t.total >= .8), "#c78a00"],
@@ -852,6 +854,273 @@ VIEWS.progress = () => {
   $("#imb").onclick = () => { try { const o = JSON.parse($("#im").value); if (!o || typeof o !== "object" || !("done" in o)) throw 0; S = Object.assign(fresh(), o); save(); toast("Đã khôi phục tiến độ"); route(); } catch (e) { toast("Mã sao lưu không hợp lệ"); } };
   let rs = false;
   $("#rs").onclick = () => { if (!rs) { rs = true; $("#rs").textContent = "Bấm lần nữa để xóa hết"; return; } S = fresh(); save(); toast("Đã xóa toàn bộ tiến độ"); route(); };
+};
+
+/* ================= VSTEP: TRANG TỔNG QUAN & LUYỆN NÓI ================= */
+const V = D.vstepSpeaking;
+const VRUB = [
+  ["Ngữ pháp", "Dùng đúng và đa dạng cấu trúc câu (đơn, ghép, phức)."],
+  ["Từ vựng", "Đủ từ để diễn đạt ý, dùng từ chính xác, có cụm từ theo chủ đề."],
+  ["Phát âm", "Rõ ràng, dễ hiểu; trọng âm và ngữ điệu tương đối tự nhiên."],
+  ["Độ trôi chảy", "Ít ngập ngừng, nói đủ thời gian quy định."],
+  ["Tổ chức diễn ngôn", "Ý mạch lạc, có từ nối, có lý do và ví dụ."]
+];
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function rubricBox(id) {
+  return `<div class="card"><h3>Tự đánh giá theo tiêu chí VSTEP</h3><p class="muted" style="font-size:14px">Nghe lại bản ghi âm và chấm mỗi tiêu chí từ 1 (yếu) đến 5 (rất tốt).</p>
+  <div class="rubric">${VRUB.map(([n, d], i) => `<label><b>${n}</b><span class="muted" style="font-size:13.5px">${d}</span><div class="rr" data-c="${i}">${[1, 2, 3, 4, 5].map(v => `<button type="button" data-v="${v}">${v}</button>`).join("")}</div></label>`).join("")}</div>
+  <div class="row" style="margin-top:14px;justify-content:space-between"><b id="vTot">Tổng: 0/25</b><button class="btn pri" id="vSave">${ic("check")} Lưu đánh giá</button></div></div>`;
+}
+function bindRubric(id) {
+  const m = VRUB.map(() => 0);
+  $$(".rr").forEach(g => g.onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    m[+g.dataset.c] = +b.dataset.v;
+    $$("button", g).forEach(x => x.classList.toggle("on", +x.dataset.v <= +b.dataset.v));
+    $("#vTot").textContent = `Tổng: ${m.reduce((a, c) => a + c, 0)}/25`;
+  });
+  $("#vSave").onclick = () => { if (m.includes(0)) return toast("Hãy chấm đủ 5 tiêu chí."); complete(id, m.reduce((a, c) => a + c, 0), 25); };
+}
+
+/* ghi âm + chép lời dùng chung */
+function makeRec(box) {
+  let on = false, mr = null, stream = null, chunks = [], sr = null, tx = "", t0 = 0;
+  const st = $(".rst", box), aud = $("audio", box), out = $(".rtx", box);
+  const api = {
+    get on() { return on; },
+    async start() {
+      if (on) return; on = true; tx = ""; t0 = Date.now(); out.innerHTML = ""; aud.hidden = true;
+      st.textContent = "● Đang ghi âm…"; st.style.color = "var(--coral)";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mr = new MediaRecorder(stream); chunks = [];
+        mr.ondataavailable = e => chunks.push(e.data);
+        mr.onstop = () => { aud.src = URL.createObjectURL(new Blob(chunks, { type: mr.mimeType || "audio/webm" })); aud.hidden = false; stream.getTracks().forEach(t => t.stop()); };
+        mr.start();
+      } catch (e) { st.textContent = "Không ghi âm được (cần cho phép micro và trang chạy qua https). Bạn vẫn có thể luyện nói theo đồng hồ."; st.style.color = ""; }
+      if (SR) {
+        sr = new SR(); sr.lang = "en-US"; sr.continuous = true; sr.interimResults = true;
+        sr.onresult = e => { let it = ""; for (let i = e.resultIndex; i < e.results.length; i++) { if (e.results[i].isFinal) tx += e.results[i][0].transcript + " "; else it += e.results[i][0].transcript; } out.innerHTML = `<div class="exp" style="margin-top:12px"><b>Chép lời trực tiếp:</b> ${esc(tx)}<span class="muted">${esc(it)}</span></div>`; };
+        sr.onend = () => { if (on) try { sr.start(); } catch (e) {} };
+        try { sr.start(); } catch (e) {}
+      }
+    },
+    stop() {
+      if (!on) return; on = false; st.textContent = "Đã dừng ghi âm. Nghe lại bên dưới."; st.style.color = "";
+      try { mr && mr.state !== "inactive" && mr.stop(); } catch (e) {}
+      try { sr && sr.stop(); } catch (e) {}
+      const secs = Math.max(1, (Date.now() - t0) / 1000), words = norm(tx).length;
+      if (words) {
+        const lk = findLinkers(tx);
+        out.innerHTML = `<div class="card" style="margin-top:14px;box-shadow:none"><h3>Phân tích bài nói</h3>
+        <div class="stat"><div><b>${words}</b><span>từ đã nói</span></div><div><b>${Math.round(words / secs * 60)}</b><span>từ/phút</span></div><div><b>${fmt(Math.round(secs))}</b><span>thời lượng</span></div><div><b>${lk.length}</b><span>từ nối khác nhau</span></div></div>
+        <p style="margin:12px 0 4px"><b>Từ nối đã dùng:</b> ${lk.length ? lk.map(esc).join(", ") : "chưa có – hãy thêm because, so, however, for example…"}</p>
+        <p class="muted" style="margin:0;font-size:15px"><b>Bản chép lời:</b> ${esc(tx)}</p></div>`;
+      }
+    },
+    kill() { on = false; try { mr && mr.state !== "inactive" && mr.stop(); } catch (e) {} try { sr && sr.abort(); } catch (e) {} try { stream && stream.getTracks().forEach(t => t.stop()); } catch (e) {} }
+  };
+  cleanup.push(api.kill);
+  return api;
+}
+const recHTML = `<div class="recbox" style="margin-top:16px"><div class="row"><span class="rst muted" style="font-size:14px">Bản ghi âm sẽ tự bắt đầu khi bạn bấm “Bắt đầu”.</span></div><audio controls hidden style="width:100%;margin-top:10px"></audio><div class="rtx"></div></div>`;
+
+/* trình chạy kịch bản: đọc câu hỏi → đếm giờ → … */
+let seqTok = 0, seqSkip = null;
+function runSteps(steps, ui) {
+  const tok = ++seqTok; let i = 0;
+  cleanup.push(() => { seqTok++; });
+  const next = () => {
+    if (tok !== seqTok) return;
+    clearTimers(); seqSkip = null;
+    if (i >= steps.length) { ui.done(); return; }
+    const s = steps[i++];
+    ui.step(s, i, steps.length);
+    if (s.say) {
+      seqSkip = () => { if (TTS) speechSynthesis.cancel(); next(); };
+      if (!TTS) { setTimeout(() => tok === seqTok && next(), 2500); return; }
+      speechSynthesis.cancel();
+      const u = utter(s.say, 1, .9);
+      let fired = false;
+      const go = () => { if (fired || tok !== seqTok) return; fired = true; setTimeout(next, 350); };
+      u.onend = go; u.onerror = go;
+      setTimeout(() => speechSynthesis.speak(u), 60);
+      const guard = setTimeout(go, 4000 + s.say.split(" ").length * 600);
+      cleanup.push(() => clearTimeout(guard));
+    } else if (s.wait) {
+      let left = s.wait; ui.clock(left, s);
+      const t = setInterval(() => { left--; ui.clock(Math.max(0, left), s); if (left <= 0) { clearInterval(t); timers.delete(t); next(); } }, 1000);
+      timers.add(t);
+      seqSkip = () => { clearInterval(t); timers.delete(t); next(); };
+    } else next();
+  };
+  next();
+  return { skip: () => seqSkip && seqSkip(), stop: () => { seqTok++; clearTimers(); if (TTS) speechSynthesis.cancel(); } };
+}
+function stageCard(extra = "") {
+  return `<div class="card">
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><div class="muted" id="sLabel" style="font-weight:600">Sẵn sàng</div><div class="timer" id="sClock">--:--</div></div>
+      <div class="row"><button class="btn pri" id="sGo">${ic("play")} Bắt đầu</button><button class="btn" id="sSkip" disabled>Bỏ qua bước này ${ic("arrow")}</button><button class="btn ghost" id="sStop" disabled>${ic("stop")} Dừng</button></div>
+    </div>
+    <div class="bar" style="--k:var(--c-s);margin-top:14px"><i id="sBar" style="width:0"></i></div>
+    ${extra}${recHTML}</div>`;
+}
+function wireStage(buildSteps, onStep) {
+  const rec = makeRec($(".recbox"));
+  let run = null;
+  const ui = {
+    step: (s, i, n) => { $("#sBar").style.width = (100 * i / n) + "%"; $("#sLabel").textContent = s.label || (s.say ? "Giám khảo đang hỏi…" : ""); if (s.say) $("#sClock").textContent = "··"; onStep && onStep(s); },
+    clock: (left, s) => { const c = $("#sClock"); if (!c) return; c.textContent = fmt(left); c.classList.toggle("warn", left <= 10 && !s.prep); },
+    done: () => { rec.stop(); $("#sLabel").textContent = "Hoàn thành! Nghe lại bản ghi và tự đánh giá bên dưới."; $("#sClock").textContent = "✓"; $("#sGo").disabled = false; $("#sGo").innerHTML = ic("redo") + " Làm lại"; $("#sSkip").disabled = $("#sStop").disabled = true; toast("Đã hoàn thành phần nói"); }
+  };
+  $("#sGo").onclick = () => {
+    stopAudio(); $("#sGo").disabled = true; $("#sSkip").disabled = $("#sStop").disabled = false;
+    rec.start(); run = runSteps(buildSteps(), ui);
+  };
+  $("#sSkip").onclick = () => run && run.skip();
+  $("#sStop").onclick = () => { if (run) run.stop(); rec.stop(); $("#sLabel").textContent = "Đã dừng."; $("#sGo").disabled = false; $("#sGo").innerHTML = ic("redo") + " Làm lại"; $("#sSkip").disabled = $("#sStop").disabled = true; };
+}
+function chooser(list, label, cur) {
+  return `<div class="row" style="margin-bottom:14px"><label class="row" style="gap:8px;font-weight:600">${label}
+    <select id="vPick" style="max-width:min(100%,520px)">${list.map((x, i) => `<option value="${i}" ${i === cur ? "selected" : ""}>${i + 1}. ${esc(x)}</option>`).join("")}</select></label>
+    <button class="btn sm" id="vRand">${ic("shuffle")} Ngẫu nhiên</button></div>`;
+}
+function bindChooser(n, set) {
+  const go = i => { stopAudio(); clearTimers(); cleanup.forEach(f => { try { f(); } catch (e) {} }); cleanup = []; set(i); window.scrollTo(0, 0); };
+  $("#vPick").onchange = e => go(+e.target.value);
+  $("#vRand").onclick = () => go(Math.floor(Math.random() * n));
+}
+const vHead = (l, intro) => head(l) + `<div class="wrap"><p class="muted" style="max-width:75ch;margin-top:-8px">${intro}</p>`;
+const mindmap = t => `<div class="mind"><div class="mc">${esc(t.topic)}</div><div class="mb">${t.ideas.map(x => `<div>${esc(x)}</div>`).join("")}<div class="own">Ý của riêng bạn…</div></div></div>`;
+const optCards = (sv, show) => `<div class="opts3">${sv.options.map((o, i) => `<div class="oc"><b>${"ABC"[i]}. ${esc(o)}</b>${sv.ideas && show ? `<div class="pc"><span>+</span> ${esc(sv.ideas[i][0])}</div><div class="pc n"><span>–</span> ${esc(sv.ideas[i][1])}</div>` : ""}</div>`).join("")}</div>`;
+
+const VS = {};
+VS.p1 = (l, cur = Math.floor(Math.random() * V.part1.length)) => {
+  const t = V.part1[cur];
+  app.innerHTML = vHead(l, "Part 1 kéo dài khoảng 3 phút. Giám khảo hỏi 3–6 câu về 2 chủ đề quen thuộc. Trả lời trực tiếp, thêm lý do hoặc ví dụ, khoảng 20–30 giây mỗi câu.") + `<div class="two"><div>
+    ${chooser(V.part1.map(x => x.topic), "Chủ đề:", cur)}
+    <div class="card"><h2>${esc(t.topic)}</h2><ol class="p1q">${t.qs.map((q, i) => `<li data-i="${i}">${esc(q)} <button class="btn sm ghost" data-say="${esc(q)}" aria-label="Nghe câu hỏi" style="min-height:30px;padding:2px 6px">${ic("sound")}</button></li>`).join("")}</ol></div>
+    ${stageCard()}
+  </div><div class="stick">
+    <div class="card"><h3>Cách mở đầu câu trả lời</h3><div class="row">${V.starters.map(p => `<button class="btn sm" data-say="${esc(p.replace(/…/g, ""))}">${esc(p)}</button>`).join("")}</div>
+    <p class="muted" style="font-size:14px;margin:12px 0 0">Công thức gợi ý: <b>Trả lời trực tiếp → Lý do → Ví dụ/ chi tiết</b>. Tránh trả lời chỉ “Yes/No”.</p></div>
+    ${rubricBox(l.id)}
+  </div></div>${pager(l)}</div>`;
+  bindChooser(V.part1.length, i => VS.p1(l, i));
+  wireStage(() => [
+    { say: `Let's talk about ${t.topic.toLowerCase()}.`, label: "Giới thiệu chủ đề" },
+    ...t.qs.flatMap((q, i) => [{ say: q, label: `Câu hỏi ${i + 1}`, qi: i }, { wait: 30, label: `Trả lời câu ${i + 1} (30 giây)`, qi: i }])
+  ], s => { if (s.qi != null) $$(".p1q li").forEach(li => li.classList.toggle("now", +li.dataset.i === s.qi)); });
+  bindRubric(l.id);
+};
+VS.p2 = (l, cur = Math.floor(Math.random() * V.part2.length)) => {
+  const sv = V.part2[cur];
+  app.innerHTML = vHead(l, "Part 2 kéo dài khoảng 4 phút: 1 phút chuẩn bị và khoảng 2–3 phút nói. Chọn phương án tốt nhất, giải thích vì sao chọn và vì sao không chọn hai phương án còn lại.") + `<div class="two"><div>
+    ${chooser(V.part2.map(x => x.sit), "Tình huống:", cur)}
+    <div class="card"><h2>Situation</h2><p style="font-size:18px">${esc(sv.sit)}</p><div id="oc">${optCards(sv, false)}</div>
+    <button class="btn sm" id="ideaT" style="margin-top:12px">Hiện gợi ý ưu/ nhược điểm</button></div>
+    ${stageCard()}
+  </div><div class="stick">
+    <div class="card"><h3>Khung trả lời</h3><ol style="margin:0;padding-left:20px">${V.frame.map(p => `<li style="margin-bottom:4px">${esc(p)}</li>`).join("")}</ol></div>
+    ${sv.model ? `<div class="card"><details><summary>Bài nói mẫu</summary><p style="margin-top:0">${esc(sv.model)}</p><button class="btn sm" data-say="${esc(sv.model)}">${ic("sound")} Nghe bài mẫu</button></details></div>` : `<div class="card"><p class="muted" style="margin:0;font-size:15px">Tình huống có bài mẫu: số 1, 3, 4 và 12. Hãy tham khảo cách lập luận rồi áp dụng cho tình huống này.</p></div>`}
+    ${rubricBox(l.id)}
+  </div></div>${pager(l)}</div>`;
+  bindChooser(V.part2.length, i => VS.p2(l, i));
+  let show = false;
+  $("#ideaT").onclick = () => { show = !show; $("#oc").innerHTML = optCards(sv, show); $("#ideaT").textContent = show ? "Ẩn gợi ý" : "Hiện gợi ý ưu/ nhược điểm"; };
+  wireStage(() => [
+    { say: `Here is the situation. ${sv.sit} The options are: ${sv.options.join("; ")}. You have one minute to prepare.`, label: "Giám khảo đọc tình huống" },
+    { wait: 60, label: "Chuẩn bị (1 phút) – ghi chú lý do", prep: true },
+    { say: "Now, please tell me which option you choose and why.", label: "Bắt đầu nói" },
+    { wait: 150, label: "Trình bày (2 phút 30 giây)" }
+  ]);
+  bindRubric(l.id);
+};
+VS.p3 = (l, cur = Math.floor(Math.random() * V.part3.length)) => {
+  const t = V.part3[cur];
+  app.innerHTML = vHead(l, "Part 3 kéo dài khoảng 5 phút: 1 phút chuẩn bị, khoảng 2 phút trình bày theo sơ đồ ý (có thể thêm ý riêng), sau đó trả lời câu hỏi mở rộng.") + `<div class="two"><div>
+    ${chooser(V.part3.map(x => x.topic), "Chủ đề:", cur)}
+    <div class="card"><h2>Topic</h2>${mindmap(t)}
+      <h3 style="margin-top:18px">Câu hỏi mở rộng</h3><ol class="p1q" style="margin:0">${t.follow.map((q, i) => `<li data-i="${i}">${esc(q)}</li>`).join("")}</ol></div>
+    ${stageCard()}
+  </div><div class="stick">
+    <div class="card"><h3>Ngôn ngữ trình bày</h3><div class="row">${V.p3lang.map(p => `<button class="btn sm" data-say="${esc(p.replace(/…/g, ""))}">${esc(p)}</button>`).join("")}</div></div>
+    ${t.model ? `<div class="card"><details><summary>Bài nói mẫu</summary><p style="margin-top:0">${esc(t.model)}</p><button class="btn sm" data-say="${esc(t.model)}">${ic("sound")} Nghe bài mẫu</button></details></div>` : `<div class="card"><p class="muted" style="margin:0;font-size:15px">Chủ đề có bài mẫu: số 1 và 7. Cấu trúc gợi ý: mở đầu → 3 ý (mỗi ý có giải thích + ví dụ) → ý riêng → kết luận.</p></div>`}
+    ${rubricBox(l.id)}
+  </div></div>${pager(l)}</div>`;
+  bindChooser(V.part3.length, i => VS.p3(l, i));
+  wireStage(() => [
+    { say: `Your topic is: ${t.topic} You can use the ideas given and your own ideas. You have one minute to prepare.`, label: "Giám khảo giới thiệu chủ đề" },
+    { wait: 60, label: "Chuẩn bị (1 phút)", prep: true },
+    { say: "Please begin your talk.", label: "Bắt đầu trình bày" },
+    { wait: 120, label: "Trình bày (2 phút)" },
+    ...t.follow.flatMap((q, i) => [{ say: q, label: `Câu hỏi mở rộng ${i + 1}`, qi: i }, { wait: 30, label: `Trả lời câu hỏi mở rộng ${i + 1}`, qi: i }])
+  ], s => { if (s.qi != null) $$(".p1q li").forEach(li => li.classList.toggle("now", +li.dataset.i === s.qi)); });
+  bindRubric(l.id);
+};
+VS.mock = l => {
+  app.innerHTML = vHead(l, "Bài thi mô phỏng 12 phút theo đúng trình tự VSTEP. Đề được chọn ngẫu nhiên từ ngân hàng câu hỏi. Hãy đeo tai nghe, cho phép micro, và nói liên tục như khi thi thật.") + `<div class="two"><div>
+    <div class="card" id="stage"><h2>Sẵn sàng?</h2><p>Bài thi gồm: <b>Part 1</b> (2 chủ đề × 3 câu, 30 giây/câu) → <b>Part 2</b> (1 phút chuẩn bị, 2 phút nói) → <b>Part 3</b> (1 phút chuẩn bị, 2 phút trình bày, 2 câu hỏi mở rộng).</p><p class="muted" style="margin:0">Bấm “Bắt đầu” để nhận đề.</p></div>
+    ${stageCard()}
+  </div><div class="stick">
+    <div class="card"><h3>Lưu ý khi thi nói VSTEP</h3><ul style="margin:0;padding-left:20px;font-size:15px">
+      <li>Part 1: trả lời trực tiếp + lý do + ví dụ, đừng chỉ nói “Yes/No”.</li>
+      <li>Part 2: nói rõ lựa chọn, giải thích, phản bác 2 lựa chọn còn lại.</li>
+      <li>Part 3: dùng cả 3 ý gợi ý và thêm ít nhất 1 ý riêng.</li>
+      <li>Thang VSTEP: từ 4.0/10 trở lên được xếp bậc 3 (B1).</li></ul></div>
+    ${rubricBox(l.id)}
+  </div></div>${pager(l)}</div>`;
+  const stage = $("#stage");
+  wireStage(() => {
+    const [a, b] = [...V.part1].sort(() => Math.random() - .5);
+    const p2 = pick(V.part2), p3 = pick(V.part3), f = [...p3.follow].sort(() => Math.random() - .5).slice(0, 2);
+    const v1 = (t, q) => `<span class="chip">Part 1 · Social interaction</span><h2 style="margin-top:10px">${esc(t.topic)}</h2><p style="font-size:19px;font-weight:600">${esc(q)}</p>`;
+    const v2 = `<span class="chip">Part 2 · Solution discussion</span><p style="font-size:18px;margin-top:10px">${esc(p2.sit)}</p>${optCards(p2, false)}`;
+    const v3 = `<span class="chip">Part 3 · Topic development</span>${mindmap(p3)}`;
+    return [
+      { say: "Welcome to the speaking test. Part one. Social interaction.", label: "Part 1", view: `<span class="chip">Part 1 · Social interaction</span><h2 style="margin-top:10px">Part 1</h2>` },
+      ...[a, b].flatMap(t => [
+        { say: `Let's talk about ${t.topic.toLowerCase()}.`, label: "Part 1 – chủ đề mới", view: v1(t, "") },
+        ...t.qs.flatMap(q => [{ say: q, label: "Part 1 – câu hỏi", view: v1(t, q) }, { wait: 30, label: "Part 1 – trả lời (30 giây)" }])
+      ]),
+      { say: `Part two. Solution discussion. ${p2.sit} The options are: ${p2.options.join("; ")}. You have one minute to prepare.`, label: "Part 2", view: v2 },
+      { wait: 60, label: "Part 2 – chuẩn bị (1 phút)", prep: true },
+      { say: "Please start now.", label: "Part 2 – bắt đầu nói" },
+      { wait: 120, label: "Part 2 – trình bày (2 phút)" },
+      { say: `Part three. Topic development. Your topic is: ${p3.topic} You have one minute to prepare.`, label: "Part 3", view: v3 },
+      { wait: 60, label: "Part 3 – chuẩn bị (1 phút)", prep: true },
+      { say: "Please begin.", label: "Part 3 – bắt đầu trình bày" },
+      { wait: 120, label: "Part 3 – trình bày (2 phút)" },
+      ...f.flatMap(q => [{ say: q, label: "Part 3 – câu hỏi mở rộng", view: v3 + `<p style="font-size:18px;font-weight:600;margin-top:14px">${esc(q)}</p>` }, { wait: 30, label: "Part 3 – trả lời (30 giây)" }]),
+      { say: "That is the end of the speaking test. Thank you.", label: "Kết thúc", view: `<h2>Kết thúc bài thi</h2><p>Nghe lại bản ghi âm, xem phân tích bên dưới và tự đánh giá theo 5 tiêu chí.</p>` }
+    ];
+  }, s => { if (s.view) stage.innerHTML = s.view; });
+  bindRubric(l.id);
+};
+
+VIEWS.vstep = () => {
+  const vs = ALL.filter(l => l.vstep), dn = vs.filter(l => S.done[l.id]).length;
+  const rows = [
+    ["Nghe", "3 phần, 35 câu trắc nghiệm: thông báo ngắn (8), hội thoại (12), bài giảng/ bài nói (15)", "khoảng 40 phút", "listening"],
+    ["Đọc", "4 bài đọc, 40 câu trắc nghiệm (ý chính, chi tiết, từ vựng, suy luận)", "60 phút", "reading"],
+    ["Viết", "Task 1: thư/ email ≥ 120 từ (1/3 điểm) · Task 2: bài luận ≥ 250 từ (2/3 điểm)", "60 phút", "writing"],
+    ["Nói", "Part 1 tương tác xã hội · Part 2 thảo luận giải pháp · Part 3 phát triển chủ đề", "12 phút", "speaking"]
+  ];
+  app.innerHTML = `<section class="band"><div class="wrap">
+    <div><div class="crumbs"><a href="#home">Tổng quan</a> › VSTEP</div>
+      <h1>Luyện thi VSTEP bậc 3 (B1)</h1>
+      <p>VSTEP là bài thi đánh giá năng lực tiếng Anh từ bậc 3 đến bậc 5 theo Khung năng lực ngoại ngữ 6 bậc dùng cho Việt Nam. Điểm trung bình 4 kỹ năng từ 4.0/10 được xếp bậc 3 (B1). Khu vực này gồm ${vs.length} hoạt động mới, biên soạn theo đúng định dạng từng phần thi.</p>
+      <div class="row"><a class="btn pri" href="#vsmock">${ic("mic")} Thi thử nói 12 phút</a><a class="btn" href="#test">${ic("test")} Kiểm tra ngữ pháp & từ vựng</a></div></div>
+    <div class="card" style="color:var(--ink)"><h3>Tiến độ VSTEP</h3><div class="stat"><div><b>${dn}/${vs.length}</b><span>hoạt động đã xong</span></div>${SK.map(k => { const a = vs.filter(l => l.skill === k); return `<div><b>${a.filter(l => S.done[l.id]).length}/${a.length}</b><span>${D.skills[k].name}</span></div>`; }).join("")}</div></div>
+  </div></section>
+  <div class="wrap">
+    <div class="section-head" style="margin-top:0"><h2>Cấu trúc bài thi</h2></div>
+    <div class="card" style="padding:8px 12px"><table class="stack"><thead><tr><th>Kỹ năng</th><th>Cấu trúc</th><th>Thời gian</th></tr></thead><tbody>${rows.map(r => `<tr><td><b style="color:${D.skills[r[3]].color}">${r[0]}</b></td><td>${r[1]}</td><td style="white-space:nowrap">${r[2]}</td></tr>`).join("")}</tbody></table></div>
+    ${SK.map(k => { const a = vs.filter(l => l.skill === k); return `<div class="section-head"><h2>${D.skills[k].name}</h2><a href="#${k}">Xem tất cả bài ${D.skills[k].name.toLowerCase()}</a></div>
+      <div class="grid">${a.map(l => `<a class="card lesson" href="#${l.id}" style="--k:${D.skills[k].color}"><span class="num">${esc(l.type)}</span><h3>${esc(l.title)}</h3><div class="row"><span class="chip">${esc(l.topic)}</span><span class="chip">${l.mins} phút</span></div>${S.done[l.id] ? `<span class="done-tag">✓ ${S.done[l.id].score}/${S.done[l.id].total}</span>` : `<span class="muted" style="font-size:14px">Chưa làm</span>`}</a>`).join("")}</div>`; }).join("")}
+    <p class="muted" style="font-size:14px;margin-top:28px">Toàn bộ bài nghe, bài đọc, đề viết, đề nói và bài mẫu trong khu vực này được biên soạn mới theo cấu trúc đề VSTEP; không trích từ đề thi chính thức hay sách luyện thi đã xuất bản.</p>
+  </div>`;
 };
 
 /* ---------- khởi động ---------- */
