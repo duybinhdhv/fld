@@ -11,6 +11,7 @@ B1 Passport là website học trực tuyến (LMS) để luyện **Nghe – Nói
 | **Đọc** (4 bài) | Blog, bài báo, thông báo ngắn; bấm vào từ để xem nghĩa và nghe phát âm; nghe đọc toàn bài; câu hỏi trắc nghiệm và True/False/Not Given có giải thích |
 | **Viết** (4 bài) | Email thân mật, bài báo, truyện ngắn, thư phàn nàn; dàn ý, ngôn ngữ mẫu bấm để chèn vào bài, đếm từ, bấm giờ, tự lưu nháp, nhận xét tự động (độ dài, đoạn văn, từ nối, yêu cầu riêng của từng dạng bài, lỗi hình thức), bài mẫu, sao chép, tải về .txt |
 | **Từ vựng** | Thẻ lật (flashcard) cho tất cả từ trong các bài, nghe phát âm, đánh dấu đã thuộc, lọc theo bài, trộn thẻ, tra cứu |
+| **VSTEP bậc 3** | Trang tổng quan định dạng đề; 3 bài nghe (Part 1–3), 3 bài đọc 10 câu, 4 thư Task 1 và 4 bài luận Task 2 có bài mẫu; luyện nói Part 1 (14 chủ đề), Part 2 (12 tình huống), Part 3 (12 chủ đề có sơ đồ ý) với máy đọc câu hỏi, đồng hồ tự động và ghi âm; thi thử nói 12 phút |
 | **Kiểm tra** | 20 câu ngẫu nhiên (ngữ pháp và từ vựng), 15 phút, có xếp mức B1 và giải thích từng câu |
 | **Tiến độ** | Hộ chiếu học tập có con dấu, điểm XP, chuỗi ngày học, 10 huy hiệu, điểm từng bài, sao lưu và khôi phục tiến độ |
 
@@ -31,7 +32,7 @@ B1 Passport là website học trực tuyến (LMS) để luyện **Nghe – Nói
 
 ## Thêm hoặc sửa bài học
 
-Toàn bộ học liệu nằm trong `assets/data.js`:
+Học liệu nằm trong `assets/data.js` (bài B1) và `assets/vstep.js` (bài VSTEP, ngân hàng câu hỏi nói Part 1–3 trong `vstepSpeaking`):
 
 - Bài nghe: mảng `listening` gồm `lines` (lời thoại theo người nói) và `questions`.
 - Bài nói: mảng `speaking` gồm `shadow`, `task`, `phrases`, `model`.
@@ -48,7 +49,8 @@ Khi thêm bài mới, nhớ thêm mã bài vào `plan` (lộ trình) nếu muố
 ```
 index.html          Khung trang
 assets/style.css    Giao diện (hỗ trợ sáng/tối, điện thoại)
-assets/data.js      Học liệu
+assets/data.js      Học liệu B1 theo chủ đề
+assets/vstep.js     Học liệu luyện theo định dạng VSTEP
 assets/app.js       Chức năng
 .nojekyll           Cho GitHub Pages phục vụ nguyên trạng
 ```
